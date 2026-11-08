@@ -56,6 +56,7 @@ The script expects a CSV file named `telecom_churn.csv` in the same directory.
 - matplotlib
 - seaborn
 - scikit-learn
+- imbalanced-learn
 
 ---
 
@@ -71,7 +72,7 @@ cd telecom-churn-prediction
 2. **Install dependencies:**
 
 ```bash
-pip install pandas numpy matplotlib seaborn scikit-learn
+pip install pandas numpy matplotlib seaborn scikit-learn imbalanced-learn
 ```
 
 3. **Add your dataset:**
@@ -135,10 +136,14 @@ telecom-churn-prediction/
 ### 5. Train/Test Split
 - Splits data 80/20 (training/testing) using `train_test_split` with `random_state=42` for reproducibility
 
-### 6. Model Training
-- Trains a `LogisticRegression` model (`max_iter=1000`) on the scaled training set
+### 6. Class Imbalance Handling (SMOTE)
+- Uses `SMOTE` (Synthetic Minority Over-sampling Technique) to balance the minority churn class
+- Applied strictly to the training split (`X_train`, `y_train`) to prevent data leakage into the test set
 
-### 7. Model Evaluation
+### 7. Model Training
+- Trains a `LogisticRegression` model (`max_iter=1000`) on the SMOTE-balanced training set
+
+### 8. Model Evaluation
 - **Accuracy Score** — overall proportion of correct predictions
 - **Confusion Matrix** — breakdown of true/false positives and negatives
 - **Classification Report** — precision, recall, and F1-score for each class

@@ -408,33 +408,62 @@ print(f'Shape of y_train: {y_train.shape}')
 print(f'Shape of y_test: {y_test.shape}')
 # These lines print the dimensions of the newly created training and testing sets.
 
+from imblearn.over_sampling import SMOTE
+# This imports SMOTE (Synthetic Minority Over-sampling Technique) from imbalanced-learn,
+# used to synthesize new examples for the minority class to handle class imbalance.
+
+# Display class distribution before SMOTE
+print("\nClass distribution in y_train before SMOTE:")
+# This prints a header indicating the start of class balance inspection.
+print(pd.Series(y_train).value_counts())
+# This prints the count of each class in the training labels to observe the imbalance before oversampling.
+
+# Initialize SMOTE
+smote = SMOTE(random_state=42)
+# This creates an instance of SMOTE with random_state=42 to ensure reproducible synthetic sample creation.
+
+# Apply SMOTE to the training set only
+X_train_resampled, y_train_resampled = smote.fit_resample(X_train, y_train)
+# This fits SMOTE on the training set and resamples it, generating synthetic samples for the minority class.
+# IMPORTANT: SMOTE is applied strictly to training data (X_train, y_train), never to test data, to avoid data leakage.
+
+print("\nClass distribution in y_train after SMOTE:")
+# This prints a header for the class counts after oversampling.
+print(pd.Series(y_train_resampled).value_counts())
+# This verifies that the classes are now balanced in the training set.
+
+print(f'Shape of X_train after SMOTE: {X_train_resampled.shape}')
+# This displays the new shape of the resampled training features.
+print(f'Shape of y_train after SMOTE: {y_train_resampled.shape}')
+# This displays the new shape of the resampled training target.
+
 # --- Debugging checks before model training ---
 
-print("\n--- Checking for NaNs/Infs in training data before model.fit() ---")
-# Prints a header for debugging checks.
+print("\n--- Checking for NaNs/Infs in resampled training data before model.fit() ---")
+# Prints a header for debugging checks on the resampled training data.
 # Convert to DataFrame/Series for easy NaN/Inf checking with pandas methods
-X_train_df = pd.DataFrame(X_train)
-# Converts X_train (which is a numpy array after scaling) back to a DataFrame for easier NaN/Inf checking.
-y_train_series = pd.Series(y_train)
-# Converts y_train (which is a numpy array after splitting) back to a Series.
+X_train_df = pd.DataFrame(X_train_resampled)
+# Converts X_train_resampled (which is a numpy array after scaling and SMOTE) back to a DataFrame for easier NaN/Inf checking.
+y_train_series = pd.Series(y_train_resampled)
+# Converts y_train_resampled back to a Series.
 
 nan_in_X_train = X_train_df.isnull().sum().sum()
-# Calculates total NaNs in X_train.
+# Calculates total NaNs in resampled X_train.
 inf_in_X_train = X_train_df.isin([np.inf, -np.inf]).sum().sum()
-# Calculates total Infs in X_train.
+# Calculates total Infs in resampled X_train.
 nan_in_y_train = y_train_series.isnull().sum()
-# Calculates total NaNs in y_train.
+# Calculates total NaNs in resampled y_train.
 inf_in_y_train = y_train_series.isin([np.inf, -np.inf]).sum()
-# Calculates total Infs in y_train.
+# Calculates total Infs in resampled y_train.
 
-print(f"Number of NaN values in X_train: {nan_in_X_train}")
-print(f"Number of Inf values in X_train: {inf_in_X_train}")
-print(f"Number of NaN values in y_train: {nan_in_y_train}")
-print(f"Number of Inf values in y_train: {inf_in_y_train}")
-# Prints the counts of NaN and Inf values in training data.
+print(f"Number of NaN values in resampled X_train: {nan_in_X_train}")
+print(f"Number of Inf values in resampled X_train: {inf_in_X_train}")
+print(f"Number of NaN values in resampled y_train: {nan_in_y_train}")
+print(f"Number of Inf values in resampled y_train: {inf_in_y_train}")
+# Prints the counts of NaN and Inf values in the resampled training data.
 if nan_in_X_train > 0 or inf_in_X_train > 0 or nan_in_y_train > 0 or inf_in_y_train > 0:
 # If any non-finite values are found in training data:
-    print("WARNING: Non-finite values detected in training data. This might cause issues during model fitting.")
+    print("WARNING: Non-finite values detected in resampled training data. This might cause issues during model fitting.")
     # Prints a warning.
 print("--- End of debugging checks ---")
 
@@ -446,10 +475,10 @@ model = LogisticRegression(max_iter=1000)
 # This creates an instance of the Logistic Regression model.
 # `max_iter=1000` sets the maximum number of iterations for the solver to converge,
 # which can help prevent a `ConvergenceWarning` for larger datasets or complex models.
-model.fit(X_train, y_train)
-# This trains the Logistic Regression model using the training features (`X_train`)
-# and their corresponding target values (`y_train`).
-print("\nLogistic Regression model trained successfully.")
+model.fit(X_train_resampled, y_train_resampled)
+# This trains the Logistic Regression model using the SMOTE-resampled training features (`X_train_resampled`)
+# and their corresponding target values (`y_train_resampled`).
+print("\nLogistic Regression model trained successfully on SMOTE-balanced data.")
 # Prints a confirmation message.
 
 # Make predictions
